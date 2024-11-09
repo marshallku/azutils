@@ -4,8 +4,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/marshallku/azutils/cmd"
 	"github.com/marshallku/azutils/pkg/azure"
-	"github.com/marshallku/azutils/pkg/config"
+	"github.com/spf13/cobra"
 )
 
 func main() {
@@ -16,12 +17,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg, err := config.NewConfig()
-	if err != nil {
-		logger.Println("Error loading config:", err)
-		os.Exit(1)
+	rootCmd := &cobra.Command{
+		Use:   "azutils",
+		Short: "Azure utilities for common tasks",
 	}
 
-	logger.Println("Tags to keep:", cfg.TagsToKeep)
-	logger.Println("Successfully logged in to Azure")
+	acrCmd := cmd.NewACRCommand(logger)
+	rootCmd.AddCommand(acrCmd)
+
+	if err := rootCmd.Execute(); err != nil {
+		logger.Fatal(err)
+	}
 }
