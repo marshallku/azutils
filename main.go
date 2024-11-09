@@ -22,6 +22,9 @@ func main() {
 		Short: "Azure utilities for common tasks",
 	}
 
+	configCmd := cmd.NewConfigCommand(logger)
+	rootCmd.AddCommand(configCmd)
+
 	acrCmd := cmd.NewACRCommand(logger)
 	rootCmd.AddCommand(acrCmd)
 
