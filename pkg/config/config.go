@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -67,6 +68,7 @@ func getConfigPath() (string, error) {
 	}
 	return filepath.Join(configDir, "config.json"), nil
 }
+
 func loadConfig() (*Configuration, error) {
 	configPath, err := getConfigPath()
 	if err != nil {
@@ -89,6 +91,22 @@ func loadConfig() (*Configuration, error) {
 	}
 
 	return &config, nil
+}
+
+func UpdateConfig(key string, value interface{}) error {
+	config, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	rValue := reflect.ValueOf(config).Elem()
+	rField := rValue.FieldByName(key)
+	if !rField.IsValid() {
+		return fmt.Errorf("field %s not found in configuration", key)
+	}
+
+	rField.Set(reflect.ValueOf(value))
+	return SaveConfig(config)
 }
 
 func SaveConfig(config *Configuration) error {
