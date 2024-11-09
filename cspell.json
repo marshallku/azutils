@@ -1,0 +1,4 @@
+{
+    "words": ["azutils", "marshallku"],
+    "ignorePaths": ["go.mod"]
+}
