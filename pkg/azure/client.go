@@ -4,13 +4,10 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
-
-	"github.com/marshallku/azutils/pkg/config"
 )
 
 type Client interface {
 	CheckCredential() bool
-	Login(credentials config.AzureCredentials) error
 	ListRepositories(registry string) ([]string, error)
 	ListTags(registry, repository string) ([]string, error)
 	DeleteTag(registry, repository, tag string) error
@@ -22,30 +19,9 @@ type AzureCredentials struct {
 	TenantID     string `json:"tenantId"`
 }
 
-type AzureClient struct {
-	executor CommandExecutor
-}
-
-type CommandExecutor interface {
-	Execute(name string, args ...string) ([]byte, error)
-}
-
-type DefaultExecutor struct{}
-
-func (e *DefaultExecutor) Execute(name string, args ...string) ([]byte, error) {
-	cmd := exec.Command(name, args...)
-	return cmd.CombinedOutput()
-}
-
-func NewAzureClient(executor CommandExecutor) *AzureClient {
-	if executor == nil {
-		executor = &DefaultExecutor{}
-	}
-	return &AzureClient{executor: executor}
-}
-
-func (c *AzureClient) CheckCredential() bool {
-	output, err := c.executor.Execute("az", "account", "show")
+func CheckCredential() bool {
+	cmd := exec.Command("az", "account", "show")
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return false
 	}
@@ -64,7 +40,7 @@ func (c *AzureClient) CheckCredential() bool {
 	return account.User.Name != ""
 }
 
-func (c *AzureClient) LoginWithEnvironmentalVariables() error {
+func LoginWithEnvironmentalVariables() error {
 	credentialJson := os.Getenv("AZURE_CREDENTIALS")
 
 	if credentialJson != "" {
@@ -73,7 +49,7 @@ func (c *AzureClient) LoginWithEnvironmentalVariables() error {
 			return err
 		}
 
-		return c.Login(cfg)
+		return Login(cfg)
 	}
 
 	clientId := os.Getenv("AZURE_CLIENT_ID")
@@ -84,17 +60,22 @@ func (c *AzureClient) LoginWithEnvironmentalVariables() error {
 		return nil
 	}
 
-	return c.Login(AzureCredentials{
+	return Login(AzureCredentials{
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
 		TenantID:     tenantId,
 	})
 }
 
-func (c *AzureClient) Login(creds AzureCredentials) error {
-	_, err := c.executor.Execute("az", "login", "--service-principal",
+func Login(creds AzureCredentials) error {
+	cmd := exec.Command("az", "login", "--service-principal",
 		"-u", creds.ClientID,
 		"-p", creds.ClientSecret,
 		"--tenant", creds.TenantID)
-	return err
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
