@@ -1,4 +1,4 @@
 {
     "words": ["azutils", "marshallku"],
-    "ignorePaths": ["go.mod", "go.sum"]
+    "ignorePaths": ["go.mod", "go.sum", "Makefile"]
 }
